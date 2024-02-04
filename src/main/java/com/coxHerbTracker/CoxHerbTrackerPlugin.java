@@ -7,9 +7,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
@@ -39,6 +39,8 @@ public class CoxHerbTrackerPlugin extends Plugin
 
 	@Inject
 	private CoxHerbTrackerConfig config;
+
+	LocalPoint playerLocation = client.getLocalPlayer().getLocalLocation();
 
 	@Getter
 	private int herbsFarmed;
@@ -75,9 +77,24 @@ public class CoxHerbTrackerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		LogPlayerLocation();
 		if (isInFarmingRoom())
 		{
-			herbsFarmed += countHerbsInInventory();
+			herbsFarmed = countHerbsInInventory();
+		}
+	}
+
+	private void LogPlayerLocation()
+	{
+		if (client.getLocalPlayer() != null)
+		{
+			LocalPoint localPoint = client.getLocalPlayer().getLocalLocation();
+			WorldPoint worldPoint = WorldPoint.fromLocal(client, localPoint);
+
+			int xPos = worldPoint.getX();
+			int yPos = worldPoint.getY();
+
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Player co-ords x: " + xPos + " y:" + yPos, null);
 		}
 	}
 
@@ -89,8 +106,7 @@ public class CoxHerbTrackerPlugin extends Plugin
 
 	private int countHerbsInInventory()
 	{
-		//TODO: find buchu ID and replace value here
-		int herbItemId = 0;
+		int herbItemId = CoxHerbTrackerConstants.BUCHU_GRIMY_ID;
 		ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
 
 		if (inventory != null)
